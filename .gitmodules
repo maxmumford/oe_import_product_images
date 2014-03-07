@@ -1,0 +1,3 @@
+[submodule "openerp-rpc-cli"]
+	path = openerp-rpc-cli
+	url = https://github.com/maxmumford/openerp-rpc-cli.git
