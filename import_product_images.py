@@ -23,10 +23,9 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 		prod_obj = conn.get_model('product.product')
 		imd_obj = conn.get_model('ir.model.data')
 
-		# get path for done.txt - file containing xml ids of products are are already updated
+		# get path for done.txt - file containing xml ids of products that are already updated
 		done_file_path = args.file_path.split('/')
-		done_file_name = done_file_path[-1].split('.')
-		done_file_name[0] = 'done'
+		done_file_name = ['done', 'txt']
 		done_file_name = '.'.join(done_file_name)
 		done_file_path[-1] = done_file_name
 		done_file_path = '/'.join(done_file_path)
@@ -37,7 +36,7 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 
 		# make sure done.txt file exists already
 		if not os.path.isfile(done_file_path):
-			d = open(done_file_path)
+			d = open(done_file_path, 'w')
 			d.write('')
 			d.close()
 
