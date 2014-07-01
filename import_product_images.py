@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 from openerp_rpc_cli import openerp_rpc_cli
 
 import csv
@@ -10,7 +11,7 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 
 	description = """
 	Takes a csv with columns id and url, containing product XML id's and image url respectively.
-	Then downloads the image for each product form the url and saves it to the product with respective
+	Then downloads the image for each product from the url and saves it to the product with respective
 	xml_id in OE
 	"""
 
@@ -36,6 +37,7 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 
 		# make sure done.txt file exists already
 		if not os.path.isfile(done_file_path):
+			print 'Creating file %s' % done_file_path
 			d = open(done_file_path, 'w')
 			d.write('')
 			d.close()
@@ -74,7 +76,9 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 
 					# extract data from row
 					prod_xml_id = row[pos_id]
-					prod_url = args.url_prefix + row[pos_url]
+					prod_path = args.url_prefix + row[pos_url]
+					if not prod_path:
+						continue
 
 					# get xml id from prod_xml_id
 					if '.' in prod_xml_id:
@@ -84,6 +88,7 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 					if prod_xml_id in done:
 						continue
 
+					# convert xml id to db id
 					imd_ids = imd_obj.search([('model', '=', 'product.product'), ('name', '=', prod_xml_id)])
 					if not imd_ids:
 						print row_count
@@ -93,20 +98,40 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 
 					imd_res_id = imd_obj.read(imd_ids, ['res_id'])
 					prod_id = imd_res_id[0]['res_id']
-					prod_url = urllib2.quote(bytes(prod_url.replace('\\', '/')), safe=":/'")
 
+					# encode url
 					try:
-						response = urllib2.urlopen(prod_url)
-						image = response.read()
+						prod_path = urllib2.quote(bytes(prod_path.replace('\\', '/').encode('utf-8')), safe=":/'")
+					except UnicodeEncodeError as e:
+						print row_count
+						print 'URL encoding error for string: %s' % prod_path
+						print 'Original url: %s' % row[pos_url]
+						print unicode(e)
+						print ''
+
+					# get image and convert to base64
+					try:
+						image = None
+						
+						if 'http' in prod_path or 'ftp' in prod_path:
+							response = urllib2.urlopen(prod_path)
+							image = response.read()
+						else:
+							image_file = open(prod_path)
+							image = image_file.read()
+							image_file.close()
+
+						image_base64 = base64.encodestring(image)
 						response.close()
 					except urllib2.URLError as e:
 						print row_count
-						print 'could not get image %s: %s' % (prod_url, unicode(e))
+						print 'could not get image %s: %s' % (prod_path, unicode(e))
 						print ''
 						continue
 
+					# write to openerp
 					try:
-						prod_obj.write(prod_id, {'image_medium': base64.encodestring(image)})
+						prod_obj.write(prod_id, {'image_medium': image_base64})
 						done_file.write('%s\n' % prod_xml_id)
 						print row_count
 						print 'updated img for prod id: %s, xml id: %s' % (prod_id, prod_xml_id)
