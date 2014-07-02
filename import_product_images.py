@@ -20,7 +20,6 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 		parser.add_argument('file_path', type=str, help='Path to the CSV file. Columns should be db-id/name/url')
 		parser.add_argument('--url-prefix', type=str, help='Text to prefix to the values in the url column')
 
-
 	def do(self, args, conn):
 		prod_obj = conn.get_model('product.product')
 		imd_obj = conn.get_model('ir.model.data')
@@ -77,7 +76,7 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 
 					# extract data from row
 					prod_xml_id = row[pos_id]
-					prod_path = args.url_prefix + row[pos_url]
+					prod_path = args.url_prefix or '' + row[pos_url]
 					if not prod_path:
 						continue
 
@@ -117,13 +116,13 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 						if 'http' in prod_path or 'ftp' in prod_path:
 							response = urllib2.urlopen(prod_path)
 							image = response.read()
+							response.close()
 						else:
 							image_file = open(prod_path)
 							image = image_file.read()
 							image_file.close()
 
 						image_base64 = base64.encodestring(image)
-						response.close()
 					except urllib2.URLError as e:
 						print row_count
 						print 'could not get image %s: %s' % (prod_path, unicode(e))
