@@ -1,3 +1,4 @@
+#!/usr/bin/python
 # -*- coding: utf-8 -*-
 from openerp_rpc_cli import openerp_rpc_cli
 
