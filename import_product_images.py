@@ -28,6 +28,10 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 		prod_obj = conn.get_model('product.product')
 		imd_obj = conn.get_model('ir.model.data')
 
+		# add trailing slash to path prefix
+		if args.path_prefix and args.path_prefix[-1:] != '/':
+			args.path_prefix = '%s/' % args.path_prefix
+
 		# get path for done.txt - file containing xml ids of products that are already updated
 		done_file_path = args.file_path.split('/')
 		done_file_name = ['done', 'txt']
