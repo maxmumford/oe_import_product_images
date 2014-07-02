@@ -76,7 +76,7 @@ class import_product_images(openerp_rpc_cli.OpenErpRpcCli):
 
 					# extract data from row
 					prod_xml_id = row[pos_id]
-					prod_path = args.url_prefix or '' + row[pos_url]
+					prod_path = (args.url_prefix or '') + row[pos_url]
 					if not prod_path:
 						continue
 
